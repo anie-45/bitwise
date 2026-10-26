@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Bitwise: conversor binario</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:wght@500;700;800&family=JetBrains+Mono:wght@400;600&display=swap">
+<style>
+:root{
+  --bg:#eef0f8;--surface:#ffffff;--ink:#161a3a;--muted:#5d6388;--line:#d5d9ee;
+  --accent:#3b4cff;--accent-ink:#ffffff;--on:#3b4cff;--off:#e3e6f6;--err:#c62a47;--ok:#0f8a5f;
+  --sans:"Bricolage Grotesque",system-ui,-apple-system,"Segoe UI",sans-serif;
+  --mono:"JetBrains Mono",ui-monospace,Menlo,Consolas,monospace;
+  box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --bg:#0e1124;--surface:#171b36;--ink:#eceefc;--muted:#9aa0c9;--line:#2a2f57;
+  --accent:#8b98ff;--accent-ink:#0e1124;--on:#8b98ff;--off:#242949;--err:#ff7a91;--ok:#4fd6a0}}
+:root[data-theme="dark"]{
+  --bg:#0e1124;--surface:#171b36;--ink:#eceefc;--muted:#9aa0c9;--line:#2a2f57;
+  --accent:#8b98ff;--accent-ink:#0e1124;--on:#8b98ff;--off:#242949;--err:#ff7a91;--ok:#4fd6a0}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--sans);line-height:1.5;-webkit-font-smoothing:antialiased}
+.wrap{max-width:880px;margin:0 auto;padding:clamp(20px,5vw,56px) clamp(16px,4vw,32px) 64px}
+header .brand{font-family:var(--mono);font-weight:600;color:var(--accent);font-size:15px;letter-spacing:.02em}
+h1{font-size:clamp(34px,7vw,64px);line-height:1.02;margin:14px 0 14px;font-weight:800;letter-spacing:-.025em;max-width:14ch}
+.lead{color:var(--muted);font-size:clamp(16px,2.4vw,19px);max-width:52ch;margin:0}
+
+/* Byte interactivo */
+.byte{margin-top:36px;background:var(--surface);border:1px solid var(--line);border-radius:20px;padding:clamp(16px,3vw,28px)}
+.byte-head{display:flex;justify-content:space-between;align-items:baseline;gap:12px;flex-wrap:wrap;margin-bottom:14px}
+.byte-head p{margin:0;color:var(--muted);font-size:15px}
+.bits{display:grid;grid-template-columns:repeat(8,1fr);gap:clamp(5px,1.4vw,12px)}
+.bit{display:flex;flex-direction:column;align-items:center;gap:6px}
+.w{font-family:var(--mono);font-size:12px;color:var(--muted)}
+.bit button{width:100%;aspect-ratio:3/4;border-radius:12px;border:2px solid var(--line);background:var(--off);color:var(--muted);
+  font:600 clamp(20px,5vw,34px) var(--mono);cursor:pointer;transition:background .15s,transform .12s,color .15s,border-color .15s}
+.bit button[aria-pressed="true"]{background:var(--on);border-color:var(--on);color:var(--accent-ink);transform:translateY(-4px)}
+button:focus-visible,input:focus-visible,textarea:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+.readout{display:flex;gap:clamp(16px,4vw,40px);margin-top:22px;flex-wrap:wrap;align-items:flex-end}
+.readout div span{display:block;font-size:13px;color:var(--muted)}
+.readout b{font:600 clamp(28px,6vw,44px)/1.1 var(--mono)}
+.linkbtn{margin-left:auto;background:none;border:1px solid var(--line);color:var(--ink);border-radius:999px;padding:8px 14px;font:500 14px var(--sans);cursor:pointer}
+.linkbtn:hover{border-color:var(--accent)}
+
+/* Herramientas */
+.tabs{display:flex;gap:6px;margin:48px 0 16px;padding:5px;background:var(--off);border-radius:14px;width:fit-content;max-width:100%}
+.tabs button{border:0;background:none;color:var(--muted);font:600 15px var(--sans);padding:10px 18px;border-radius:10px;cursor:pointer}
+.tabs button[aria-selected="true"]{background:var(--surface);color:var(--ink);box-shadow:0 1px 3px rgba(20,25,70,.15)}
+.panel{background:var(--surface);border:1px solid var(--line);border-radius:20px;padding:clamp(16px,3vw,28px)}
+.panel[hidden]{display:none}
+.panel h2{margin:0 0 4px;font-size:24px;letter-spacing:-.01em}
+.panel > p{margin:0 0 20px;color:var(--muted)}
+.pair{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+@media(max-width:640px){.pair{grid-template-columns:1fr}}
+label{display:block;font-weight:600;font-size:14px;margin-bottom:6px}
+textarea,input[type=text]{width:100%;border:1.5px solid var(--line);background:var(--bg);color:var(--ink);border-radius:12px;padding:12px 14px;font:400 16px/1.5 var(--mono);resize:vertical}
+textarea{min-height:130px}
+.row{display:flex;justify-content:space-between;align-items:center;margin-top:8px;min-height:32px;gap:8px}
+.msg{font-size:14px;color:var(--muted)}
+.msg.err{color:var(--err)}
+.copy{background:var(--accent);color:var(--accent-ink);border:0;border-radius:8px;padding:6px 12px;font:600 13px var(--sans);cursor:pointer;flex:none}
+.extras{display:flex;gap:10px;flex-wrap:wrap;margin-top:18px}
+.chip{background:var(--bg);border:1px solid var(--line);border-radius:10px;padding:8px 12px;font:400 14px var(--mono)}
+.chip i{font-style:normal;color:var(--muted);font-family:var(--sans);margin-right:6px}
+footer{margin-top:40px;color:var(--muted);font-size:14px}
+@media(prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+</head>
+<body>
+<div class="wrap">
+<header>
+  <div class="brand">Bitwise</div>
+  <h1>Habla con los ceros y unos</h1>
+  <p class="lead">Convierte binario a decimal y pasa palabras a binario (y de vuelta), en tiempo real. Sin registros, todo se calcula en tu navegador.</p>
+</header>
+
+<section class="byte" aria-label="Byte interactivo">
+  <div class="byte-head"><p>Toca los bits para encenderlos y mira cómo se forma el número.</p>
+    <button class="linkbtn" id="reset" type="button">Reiniciar</button></div>
+  <div class="bits" id="bits"></div>
+  <div class="readout">
+    <div><span>Decimal</span><b id="bDec">0</b></div>
+    <div><span>Carácter ASCII</span><b id="bChar">·</b></div>
+  </div>
+</section>
+
+<div class="tabs" role="tablist">
+  <button role="tab" id="t1" aria-selected="true" aria-controls="p1">Binario y decimal</button>
+  <button role="tab" id="t2" aria-selected="false" aria-controls="p2">Binario y texto</button>
+</div>
+
+<section class="panel" id="p1" role="tabpanel" aria-labelledby="t1">
+  <h2>Binario y decimal</h2>
+  <p>Escribe en cualquiera de los dos campos y el otro se actualiza solo.</p>
+  <div class="pair">
+    <div><label for="bin">Binario</label><input type="text" id="bin" inputmode="numeric" autocomplete="off" placeholder="Ej: 101010" value="101010"></div>
+    <div><label for="dec">Decimal</label><input type="text" id="dec" inputmode="numeric" autocomplete="off" placeholder="Ej: 42"></div>
+  </div>
+  <div class="row"><span class="msg" id="msg1"></span><button class="copy" data-copy="dec" type="button">Copiar decimal</button></div>
+  <div class="extras" id="extras"></div>
+</section>
+
+<section class="panel" id="p2" role="tabpanel" aria-labelledby="t2" hidden>
+  <h2>Binario y texto</h2>
+  <p>Cada letra se codifica en bytes de 8 bits (UTF-8, así que las tildes y la ñ también funcionan).</p>
+  <div class="pair">
+    <div><label for="txt">Texto</label><textarea id="txt" placeholder="Escribe una palabra o frase">Hola</textarea>
+      <div class="row"><span class="msg" id="msg2a"></span><button class="copy" data-copy="txt" type="button">Copiar texto</button></div></div>
+    <div><label for="bin2">Binario</label><textarea id="bin2" placeholder="Pega aquí bytes como 01001000 01101111"></textarea>
+      <div class="row"><span class="msg" id="msg2b"></span><button class="copy" data-copy="bin2" type="button">Copiar binario</button></div></div>
+  </div>
+</section>
+
+<footer>Consejo: en el campo binario puedes separar los grupos con espacios; se ignoran al convertir.</footer>
+</div>
+
+<script>
+const $ = id => document.getElementById(id);
+
+/* Byte interactivo */
+const bitsEl = $('bits'), state = Array(8).fill(0);
+function paintByte(){
+  const n = parseInt(state.join(''), 2);
+  $('bDec').textContent = n;
+  $('bChar').textContent = (n >= 33 && n <= 126) ? String.fromCharCode(n) : (n === 32 ? 'espacio' : '·');
+  bitsEl.querySelectorAll('button').forEach((b, i) => {
+    b.textContent = state[i]; b.setAttribute('aria-pressed', state[i] ? 'true' : 'false');
+  });
+}
+for (let i = 0; i < 8; i++){
+  const d = document.createElement('div'); d.className = 'bit';
+  d.innerHTML = '<span class="w">' + (128 >> i) + '</span><button type="button" aria-label="Bit de valor ' + (128 >> i) + '"></button>';
+  d.querySelector('button').onclick = () => { state[i] ^= 1; paintByte(); };
+  bitsEl.appendChild(d);
+}
+$('reset').onclick = () => { state.fill(0); paintByte(); };
+paintByte();
+
+/* Pestañas */
+const tabs = [['t1','p1'],['t2','p2']];
+tabs.forEach(([t, p]) => $(t).onclick = () => tabs.forEach(([t2, p2]) => {
+  $(t2).setAttribute('aria-selected', t2 === t); $(p2).hidden = p2 !== p;
+}));
+
+/* Binario y decimal */
+function setMsg(el, text, err){ el.textContent = text; el.classList.toggle('err', !!err); }
+function extras(n){
+  $('extras').innerHTML = n === null ? '' :
+    '<span class="chip"><i>Hexadecimal</i>' + n.toString(16).toUpperCase() + '</span>' +
+    '<span class="chip"><i>Octal</i>' + n.toString(8) + '</span>' +
+    '<span class="chip"><i>Bits</i>' + n.toString(2).length + '</span>';
+}
+function fromBin(){
+  const v = $('bin').value.replace(/[\s_]/g, '');
+  if (!v){ $('dec').value = ''; setMsg($('msg1'), ''); extras(null); return; }
+  if (!/^[01]+$/.test(v)){ setMsg($('msg1'), 'El binario solo puede tener 0 y 1.', true); extras(null); return; }
+  const n = BigInt('0b' + v); $('dec').value = n.toString(); setMsg($('msg1'), 'Binario a decimal listo.'); extras(n);
+}
+function fromDec(){
+  const v = $('dec').value.replace(/[\s_,.]/g, '');
+  if (!v){ $('bin').value = ''; setMsg($('msg1'), ''); extras(null); return; }
+  if (!/^\d+$/.test(v)){ setMsg($('msg1'), 'El decimal solo puede tener dígitos del 0 al 9 (sin negativos ni decimales).', true); extras(null); return; }
+  const n = BigInt(v); $('bin').value = n.toString(2); setMsg($('msg1'), 'Decimal a binario listo.'); extras(n);
+}
+$('bin').addEventListener('input', fromBin);
+$('dec').addEventListener('input', fromDec);
+
+/* Binario y texto */
+const enc = new TextEncoder(), dec = new TextDecoder('utf-8', {fatal: true});
+function textToBin(){
+  const bytes = enc.encode($('txt').value);
+  $('bin2').value = Array.from(bytes, b => b.toString(2).padStart(8, '0')).join(' ');
+  setMsg($('msg2a'), bytes.length ? bytes.length + (bytes.length === 1 ? ' byte' : ' bytes') : ''); setMsg($('msg2b'), '');
+}
+function binToText(){
+  const v = $('bin2').value.replace(/\s/g, '');
+  if (!v){ $('txt').value = ''; setMsg($('msg2b'), ''); setMsg($('msg2a'), ''); return; }
+  if (!/^[01]+$/.test(v)){ setMsg($('msg2b'), 'Solo se permiten 0, 1 y espacios.', true); return; }
+  if (v.length % 8){ setMsg($('msg2b'), 'Tienes ' + v.length + ' bits; deben ser múltiplo de 8 (faltan ' + (8 - v.length % 8) + ').', true); return; }
+  try {
+    const bytes = Uint8Array.from(v.match(/.{8}/g), b => parseInt(b, 2));
+    $('txt').value = dec.decode(bytes); setMsg($('msg2b'), 'Binario a texto listo.'); setMsg($('msg2a'), '');
+  } catch (e){ setMsg($('msg2b'), 'Esos bytes no forman texto UTF-8 válido.', true); }
+}
+$('txt').addEventListener('input', textToBin);
+$('bin2').addEventListener('input', binToText);
+
+/* Copiar */
+document.querySelectorAll('.copy').forEach(b => b.onclick = async () => {
+  const t = $(b.dataset.copy).value, old = b.textContent;
+  try { await navigator.clipboard.writeText(t); b.textContent = 'Copiado'; }
+  catch (e){ $(b.dataset.copy).select(); b.textContent = 'Selecciona y copia'; }
+  setTimeout(() => b.textContent = old, 1400);
+});
+
+fromBin(); textToBin();
+</script>
+</body>
+</html>
